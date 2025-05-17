@@ -42,12 +42,8 @@ TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIJKlmNoPQRstuVWxyZ
 It’s already listed in .gitignore to protect your token.
 
 ## 📁 Project Structure
-.
-├── bot.py
-├── .env              # Your token goes here (never commit this!)
-├── .gitignore
-├── requirements.txt
-└── README.md
+
+![Project Structure image](assests/pproject_structure.png)
 
 ## 📌 Bot Features
 
@@ -55,8 +51,6 @@ It’s already listed in .gitignore to protect your token.
 - Edit user profile
 - Fetch cryptocurrency quotes in USD
 - Add favorite currencies and edit the list
-- Integration with automated tests
-- CI/CD pipelines in GitHub Actions
 
 ## 🛠️ Setup
 
