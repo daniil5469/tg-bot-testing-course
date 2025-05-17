@@ -26,4 +26,4 @@ venv/
 .idea/
 
 # user data
-data/user_data.json
+user_data.json

@@ -1,7 +1,7 @@
 # 🧑‍💻 Author
 
 Made with 💙 for the Telegram API Testing Mini-Course
-Follow along on my [LinkedIn](https://www.linkedin.com/in/daniil-shapovalov/) or Telegram channel @softwaretestersnotes 🎓py
+Follow along on my [LinkedIn](https://www.linkedin.com/in/daniil-shapovalov/) or Telegram channel @softwaretestersnotes 🎓
 
 # 🤖 Testronaut Bot
 
@@ -14,6 +14,7 @@ Ensure you have latest python and pip installed
 To run your own copy of this bot, follow these steps:
 
 1. Create a new Telegram bot
+
 Go to @BotFather in Telegram and create a bot:
 
 ```text
