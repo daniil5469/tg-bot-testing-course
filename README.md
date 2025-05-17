@@ -38,8 +38,7 @@ In the project root, create a file named .env and add your token:
 TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIJKlmNoPQRstuVWxyZ
 ```
 
-⚠️ Never commit your .env file.
-It’s already listed in .gitignore to protect your token.
+⚠️ Never commit your `.env` file. It’s already listed in `.gitignore` to protect your token.
 
 ## 📁 Project Structure
 
