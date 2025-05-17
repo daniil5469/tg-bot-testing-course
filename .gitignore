@@ -24,3 +24,6 @@ venv/
 
 # PyCharm
 .idea/
+
+# user data
+data/user_data.json
