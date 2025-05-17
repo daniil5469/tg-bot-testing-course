@@ -42,7 +42,7 @@ TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIJKlmNoPQRstuVWxyZ
 
 ## 📁 Project Structure
 
-![Project Structure image](assests/project_structure.png)
+![Project Structure image](assets/project_structure.png)
 
 ## 📌 Bot Features
 
