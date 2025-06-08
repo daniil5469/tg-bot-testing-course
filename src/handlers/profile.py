@@ -2,9 +2,9 @@ import re
 from datetime import datetime
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes, ConversationHandler
-from services import user_store
-from handlers import crypto
-from handlers.start import MAIN_MENU_INLINE
+from src.services import user_store
+from src.handlers import crypto
+from src.handlers.start import MAIN_MENU_INLINE
 
 # Conversation states
 NICKNAME, EMAIL, DOB, LOCATION = range(4)

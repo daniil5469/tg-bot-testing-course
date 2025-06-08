@@ -1,8 +1,8 @@
 import aiohttp
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ContextTypes
-from services import user_store
-from handlers.start import start
+from src.services import user_store
+from src.handlers.start import start
 
 
 # Constants for callback data states

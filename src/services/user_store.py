@@ -1,7 +1,11 @@
 import json
 import os
 
-DATA_DIR = "data"
+# This gets the directory of this current file (user_store.py)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Point to the real data dir relative to user_store.py
+DATA_DIR = os.path.join(BASE_DIR, "..", "core", "data")
 USER_DATA_FILE = os.path.join(DATA_DIR, "user_data.json")
 
 
