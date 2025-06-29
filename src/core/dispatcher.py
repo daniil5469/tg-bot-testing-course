@@ -1,11 +1,19 @@
-import asyncio
-import logging
-import requests
 import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+from scripts.update_ngrok_env import update_ngrok_env
+from scripts.update_webhook import update_telegram_webhook
+
+import logging
+import asyncio
+import traceback
 from dotenv import load_dotenv
 from flask import Flask, request
 from telegram import Bot, Update
 from telegram.ext import (
+    Application,
     ApplicationBuilder,
     CommandHandler,
     ConversationHandler,
@@ -17,50 +25,51 @@ from telegram.ext import (
 from src.handlers import profile, crypto, start
 from src.config import TELEGRAM_BOT_TOKEN, CHAT_ID
 
-# Global instances
+# Load .env before anything else
+load_dotenv()
+
+# Flask app for webhook
 app = Flask(__name__)
-application = None  # Initialized later
+
+# Global asyncio loop
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 # Logging setup
 logging.basicConfig(
-    filename="bot.log",
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO
+    level=logging.INFO,
+    filename="bot.log",
 )
+
+# Global application object
+application: Application = None
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    global application
-    print("Incoming webhook hit!")
-
-    if application is None:
-        print("Application not initialized, creating now.")
-        application = asyncio.run(create_application())
-
     try:
         data = request.get_json(force=True)
-        print("Raw update:", data)
-        update = Update.de_json(data, application.bot)
-        asyncio.run(application.process_update(update))
-    except Exception as e:
-        print("Error processing update:", e)
+        print("📩 Incoming webhook update:", data)
 
+        update = Update.de_json(data, application.bot)
+        asyncio.run_coroutine_threadsafe(application.process_update(update), loop)
+
+    except Exception as e:
+        print("❌ Error processing update:", e)
+        traceback.print_exc()
+
+    print("✅ Returning 200 OK to Telegram")
     return "ok", 200
 
 async def create_application():
     app_instance = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Initialize the app before returning
-    await app_instance.initialize()
-
-    # Optional startup message
     if CHAT_ID:
         try:
-            Bot(token=TELEGRAM_BOT_TOKEN).send_message(chat_id=CHAT_ID, text="Bot has started and is ready!")
+            await Bot(token=TELEGRAM_BOT_TOKEN).send_message(chat_id=CHAT_ID, text="🤖 Bot ready!")
         except Exception as e:
-            print(f"Failed to send test message: {e}")
+            print("❌ Failed to send startup message:", e)
 
-    # Profile conversation
     profile_convo = ConversationHandler(
         entry_points=[CallbackQueryHandler(profile.button_handler, pattern="^create_profile$")],
         states={
@@ -73,11 +82,11 @@ async def create_application():
         allow_reentry=True,
     )
 
-    # Register handlers
+    # Command handlers
     app_instance.add_handler(CommandHandler("start", start.start))
     app_instance.add_handler(CommandHandler("view_profile", profile.view_profile))
-    app_instance.add_handler(CommandHandler("help", profile.help_command))
     app_instance.add_handler(CommandHandler("delete_profile", profile.delete_profile))
+    app_instance.add_handler(CommandHandler("help", profile.help_command))
     app_instance.add_handler(CommandHandler("crypto", crypto.show_crypto_menu))
     app_instance.add_handler(profile_convo)
     app_instance.add_handler(CallbackQueryHandler(crypto.handle_crypto_callback, pattern=r"^(show_market|show_favorites|toggle_fav_.*)$"))
@@ -86,41 +95,34 @@ async def create_application():
 
     return app_instance
 
+def run_webhook():
+    global application
+
+    from scripts.update_ngrok_env import update_ngrok_env
+    from scripts.update_webhook import update_telegram_webhook
+
+    # 🟢 1. Start ngrok and update .env
+    public_url = update_ngrok_env()
+
+    # 🟢 2. Register webhook with Telegram
+    update_telegram_webhook(public_url)
+
+    # 🟢 3. Обновим переменные окружения для дальнейшего использования
+    os.environ["PUBLIC_URL"] = public_url
+
+    # 🟢 4. Init Telegram application
+    if not TELEGRAM_BOT_TOKEN or not public_url:
+        print("❌ Missing TELEGRAM_BOT_TOKEN or PUBLIC_URL")
+        return
+
+    application = asyncio.run(create_application())
+
+    # 🟢 5. Run Flask app
+    print(f"🌐 Webhook mode: listening on {public_url}/webhook")
+    app.run(host="0.0.0.0", port=8443, debug=True)
+
 def run_bot():
     global application
     application = asyncio.run(create_application())
-    print("🤖 Bot is running in polling mode...")
+    print("🤖 Polling mode started")
     application.run_polling()
-
-def run_webhook():
-    # Load updated environment variables
-    load_dotenv()
-    public_url = os.getenv("PUBLIC_URL")
-    webhook_path = "/webhook"
-    full_webhook_url = f"{public_url}{webhook_path}"
-
-    if not TELEGRAM_BOT_TOKEN or not public_url:
-        print("TELEGRAM_BOT_TOKEN or PUBLIC_URL is missing in .env")
-        return
-
-    # Create Telegram bot application
-    global application
-    application = asyncio.run(create_application())
-
-    # Set Telegram webhook
-    telegram_api_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook"
-    try:
-        response = requests.post(telegram_api_url, json={"url": full_webhook_url})
-        response_data = response.json()
-        if response.ok and response_data.get("ok"):
-            print(f"Webhook set successfully to {full_webhook_url}")
-        else:
-            print(f"Failed to set webhook: {response_data}")
-    except Exception as e:
-        print(f"Exception while setting webhook: {e}")
-        return
-
-    print(f"Webhook mode: listening on {full_webhook_url}")
-
-    # Start Flask server
-    app.run(host="0.0.0.0", port=8443)
