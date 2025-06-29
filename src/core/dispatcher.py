@@ -123,6 +123,9 @@ def run_webhook():
 
 def run_bot():
     global application
-    application = asyncio.run(create_application())
+    inner_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(inner_loop)
+    application = inner_loop.run_until_complete(create_application())
+
     print("🤖 Polling mode started")
     application.run_polling()
