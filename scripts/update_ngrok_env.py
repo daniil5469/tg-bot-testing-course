@@ -1,26 +1,46 @@
-from pyngrok import ngrok
-import os
 from dotenv import load_dotenv
+import subprocess
+import time
+import requests
 
-load_dotenv()
+PORT = 8443
+ENV_PATH = ".env"
 
-# Start ngrok tunnel on your Flask port
-port = 8443
-tunnel = ngrok.connect(port, bind_tls=True)
-public_url = tunnel.public_url  # ✅ Correct way to get the raw URL
-print(f"🔥 Public URL: {public_url}")
+def start_ngrok_once():
+    try:
+        tunnels = requests.get("http://127.0.0.1:4040/api/tunnels").json().get("tunnels", [])
+        if tunnels:
+            print("🔁 Ngrok already running. Reusing tunnel.")
+            return tunnels[0]["public_url"]
+    except Exception:
+        print("ℹ️ No existing ngrok tunnel found. Starting manually...")
 
-# Update the .env file
-env_path = ".env"
-new_lines = []
-with open(env_path, "r") as f:
-    for line in f:
-        if line.startswith("PUBLIC_URL="):
-            new_lines.append(f"PUBLIC_URL={public_url}\n")
-        else:
-            new_lines.append(line)
+    # Start ngrok in background
+    subprocess.Popen(["ngrok", "http", str(PORT)], stdout=subprocess.DEVNULL)
+    print("🚀 Ngrok process started via subprocess...")
 
-with open(env_path, "w") as f:
-    f.writelines(new_lines)
+    # Wait for ngrok to come up
+    time.sleep(3)
 
-print("✅ .env updated with new PUBLIC_URL")
+    # Get public URL
+    tunnels = requests.get("http://127.0.0.1:4040/api/tunnels").json()["tunnels"]
+    public_url = tunnels[0]["public_url"]
+    return public_url
+
+def update_env_public_url(public_url):
+    new_lines = []
+    with open(ENV_PATH, "r") as f:
+        for line in f:
+            if line.startswith("PUBLIC_URL="):
+                new_lines.append(f"PUBLIC_URL={public_url}\n")
+            else:
+                new_lines.append(line)
+    with open(ENV_PATH, "w") as f:
+        f.writelines(new_lines)
+    print(f".env updated with PUBLIC_URL={public_url}")
+
+def update_ngrok_env():
+    public_url = start_ngrok_once()
+    update_env_public_url(public_url)
+    load_dotenv(override=True)  # So os.environ is updated
+    return public_url

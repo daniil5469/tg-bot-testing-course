@@ -114,6 +114,7 @@ async def get_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 async def view_profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("👀 view_profile handler triggered")
     chat_id = update.effective_chat.id
     profile = user_store.get_user(chat_id)
     msg = (
