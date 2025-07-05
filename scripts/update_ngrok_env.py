@@ -22,7 +22,7 @@ def start_ngrok_once():
     # Wait for ngrok to come up
     time.sleep(3)
 
-    # Get public URL
+    # Get the newly created ngrok public URL (for current session)
     tunnels = requests.get("http://127.0.0.1:4040/api/tunnels").json()["tunnels"]
     public_url = tunnels[0]["public_url"]
     return public_url

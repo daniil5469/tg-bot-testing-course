@@ -4,7 +4,6 @@ from telegram.ext import ContextTypes
 from src.services import user_store
 from src.handlers.start import start
 
-
 # Constants for callback data states
 SHOW_MARKET = "show_market"
 SHOW_FAVORITES = "show_favorites"

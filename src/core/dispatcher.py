@@ -101,23 +101,23 @@ def run_webhook():
     from scripts.update_ngrok_env import update_ngrok_env
     from scripts.update_webhook import update_telegram_webhook
 
-    # 🟢 1. Start ngrok and update .env
+    # Start ngrok and update .env
     public_url = update_ngrok_env()
 
-    # 🟢 2. Register webhook with Telegram
+    # Register webhook with Telegram
     update_telegram_webhook(public_url)
 
-    # 🟢 3. Обновим переменные окружения для дальнейшего использования
+    # Update env variables for the next steps
     os.environ["PUBLIC_URL"] = public_url
 
-    # 🟢 4. Init Telegram application
+    # Init Telegram application
     if not TELEGRAM_BOT_TOKEN or not public_url:
         print("❌ Missing TELEGRAM_BOT_TOKEN or PUBLIC_URL")
         return
 
     application = asyncio.run(create_application())
 
-    # 🟢 5. Run Flask app
+    # Run Flask app
     print(f"🌐 Webhook mode: listening on {public_url}/webhook")
     app.run(host="0.0.0.0", port=8443, debug=True)
 

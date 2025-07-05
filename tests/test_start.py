@@ -1,15 +1,17 @@
+from utils.helpers import wait_for_log
 import os
-import time
-from utils.helpers import send_message
 
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-CHAT_ID = int(os.getenv("CHAT_ID"))
+def test_start_command_reply_logged():
+    log_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "bot.log"))
+    pattern = r"✅ Sent greeting to user \d+: 👋 Hello, .+! Welcome to Testronaut Bot\."
 
-def test_start_command_trigger():
-    print("📤 Sending `/start` to bot...")
-    resp = send_message(CHAT_ID, "/start")
-    assert resp.status_code == 200, f"Failed to send /start: {resp.text}"
-    print("✅ /start sent successfully.")
+    print("--- Please send `/start` message to the bot within 15 seconds...")
 
-    print("👀 Please check your Telegram — did the bot reply?")
-    time.sleep(5)  # Give bot time to respond (or log output)
+    success = wait_for_log(log_path, pattern, timeout=15)
+
+    if success:
+        print("✅ Bot replied to /start message successfully - found in logs")
+    else:
+        with open(log_path, "r") as f:
+            print("❌ Pattern not found in logs. Full log content:\n", f.read())
+        assert False, "❌ Expected bot greeting not found in logs"
