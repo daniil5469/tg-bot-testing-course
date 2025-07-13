@@ -3,6 +3,10 @@ import os
 from dotenv import load_dotenv
 import pytest
 
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 # Load .env file once at the start of the test session
 load_dotenv()
 
