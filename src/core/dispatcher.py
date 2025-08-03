@@ -49,16 +49,16 @@ application: Application = None
 def webhook():
     try:
         data = request.get_json(force=True)
-        print("📩 Incoming webhook update:", data)
+        print("Incoming webhook update:", data)
 
         update = Update.de_json(data, application.bot)
         asyncio.run_coroutine_threadsafe(application.process_update(update), loop)
 
     except Exception as e:
-        print("❌ Error processing update:", e)
+        print("Error processing update:", e)
         traceback.print_exc()
 
-    print("✅ Returning 200 OK to Telegram")
+    print("Returning 200 OK to Telegram")
     return "ok", 200
 
 async def create_application():
@@ -68,7 +68,7 @@ async def create_application():
         try:
             await Bot(token=TELEGRAM_BOT_TOKEN).send_message(chat_id=CHAT_ID, text="🤖 Bot ready!")
         except Exception as e:
-            print("❌ Failed to send startup message:", e)
+            print("Failed to send startup message:", e)
 
     profile_convo = ConversationHandler(
         entry_points=[CallbackQueryHandler(profile.button_handler, pattern="^create_profile$")],
@@ -112,13 +112,13 @@ def run_webhook():
 
     # Init Telegram application
     if not TELEGRAM_BOT_TOKEN or not public_url:
-        print("❌ Missing TELEGRAM_BOT_TOKEN or PUBLIC_URL")
+        print("Missing TELEGRAM_BOT_TOKEN or PUBLIC_URL")
         return
 
     application = asyncio.run(create_application())
 
     # Run Flask app
-    print(f"🌐 Webhook mode: listening on {public_url}/webhook")
+    print(f"Webhook mode: listening on {public_url}/webhook")
     app.run(host="0.0.0.0", port=8443, debug=True)
 
 def run_bot():
@@ -127,5 +127,5 @@ def run_bot():
     asyncio.set_event_loop(inner_loop)
     application = inner_loop.run_until_complete(create_application())
 
-    print("🤖 Polling mode started")
+    print("Polling mode started")
     application.run_polling()

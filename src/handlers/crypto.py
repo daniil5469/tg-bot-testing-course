@@ -13,8 +13,8 @@ GO_BACK_TO_MAIN = "go_back_main"
 # Example top-level keyboard with Market and Favorites buttons
 TOP_BUTTONS = InlineKeyboardMarkup([
     [
-        InlineKeyboardButton("📈 Market", callback_data=SHOW_MARKET),
-        InlineKeyboardButton("⭐ Favorites", callback_data=SHOW_FAVORITES),
+        InlineKeyboardButton("Market", callback_data=SHOW_MARKET),
+        InlineKeyboardButton("Favorites", callback_data=SHOW_FAVORITES),
     ],
 ])
 
@@ -44,9 +44,9 @@ def build_coin_row(coin, is_fav):
     change_24h = coin.get("price_change_percentage_24h", 0)
     change_str = f"{change_24h:+.2f}%"
     if change_24h > 0:
-        change_str = f"📈 {change_str}"
+        change_str = f"{change_str}"
     elif change_24h < 0:
-        change_str = f"📉 {change_str}"
+        change_str = f"{change_str}"
     else:
         change_str = f"{change_str}"
     
@@ -68,13 +68,13 @@ def build_coins_keyboard(coins, favorites, current_tab=None):
 
     # Top Market/Favorites buttons
     nav_buttons = [
-        InlineKeyboardButton("📈 Market", callback_data=SHOW_MARKET),
-        InlineKeyboardButton("⭐ Favorites", callback_data=SHOW_FAVORITES),
+        InlineKeyboardButton("Market", callback_data=SHOW_MARKET),
+        InlineKeyboardButton("Favorites", callback_data=SHOW_FAVORITES),
     ]
 
     # Back to main menu button
     buttons.append([
-        InlineKeyboardButton("⬅️ Back to Main Menu", callback_data=GO_BACK_TO_MAIN)
+        InlineKeyboardButton("Back to Main Menu", callback_data=GO_BACK_TO_MAIN)
     ])
 
     return InlineKeyboardMarkup([nav_buttons] + buttons)
@@ -86,17 +86,17 @@ def build_top_buttons(active_tab):
 
     if active_tab == "market":
         # On Market tab: show both options, highlight Market
-        buttons.append(InlineKeyboardButton("📈 Market ✅", callback_data=SHOW_MARKET))
-        buttons.append(InlineKeyboardButton("⭐ Favorites", callback_data=SHOW_FAVORITES))
+        buttons.append(InlineKeyboardButton("Market", callback_data=SHOW_MARKET))
+        buttons.append(InlineKeyboardButton("Favorites", callback_data=SHOW_FAVORITES))
 
     elif active_tab == "favorites":
         # On Favorites tab: show only return to Market
-        buttons.append(InlineKeyboardButton("⬅️ Back to Market", callback_data=SHOW_MARKET))
+        buttons.append(InlineKeyboardButton("Back to Market", callback_data=SHOW_MARKET))
 
     else:
         # Fallback: show both
-        buttons.append(InlineKeyboardButton("📈 Market", callback_data=SHOW_MARKET))
-        buttons.append(InlineKeyboardButton("⭐ Favorites", callback_data=SHOW_FAVORITES))
+        buttons.append(InlineKeyboardButton("Market", callback_data=SHOW_MARKET))
+        buttons.append(InlineKeyboardButton("Favorites", callback_data=SHOW_FAVORITES))
 
     return InlineKeyboardMarkup([buttons])
 
@@ -109,15 +109,15 @@ async def show_crypto_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, c
 
     if current_tab == "market":
         display_coins = coins
-        header = "💰 Crypto Market:\n"
+        header = "Crypto Market:\n"
     else:
         # favorites tab
         display_coins = [coin for coin in coins if coin['id'] in favorites]
-        header = "⭐ Your Favorite Coins:\n"
+        header = "Your Favorite Coins:\n"
 
     if not display_coins:
         # Handle empty list for favorites or market
-        text = "⭐ You have no favorite coins yet." if current_tab == "favorites" else "No coins found."
+        text = "You have no favorite coins yet." if current_tab == "favorites" else "No coins found."
         keyboard = build_top_buttons(current_tab)
     else:
         lines = [build_coin_row(coin, coin['id'] in favorites) for coin in display_coins]
@@ -170,4 +170,4 @@ async def handle_crypto_callback(update: Update, context: ContextTypes.DEFAULT_T
         return
 
     # Unknown callback data fallback
-    await query.edit_message_text("⚠️ Unknown option.", reply_markup=build_top_buttons(current_tab))
+    await query.edit_message_text("Unknown option.", reply_markup=build_top_buttons(current_tab))
