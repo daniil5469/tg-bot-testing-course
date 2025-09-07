@@ -27,3 +27,6 @@ venv/
 
 # user data
 user_data.json
+
+# Telethon session file
+user_session.session*

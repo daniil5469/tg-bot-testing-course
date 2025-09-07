@@ -21,3 +21,19 @@ def base_url():
 @pytest.fixture(scope="session")
 def test_user_chat_id():
     return os.getenv("TEST_CHAT_ID")
+
+@pytest.fixture(scope="session")
+def tg_api_id():
+    return int(os.getenv("TG_API_ID"))
+
+@pytest.fixture(scope="session")
+def tg_api_hash():
+    return os.getenv("TG_API_HASH")
+
+@pytest.fixture(scope="session")
+def tg_phone():
+    return os.getenv("TG_PHONE")
+
+@pytest.fixture(scope="session")
+def tg_bot_username():
+    return os.getenv("TG_BOT_USERNAME")

@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 import os
 import re
@@ -30,3 +31,17 @@ def wait_for_log(log_path, pattern, timeout=15, poll_interval=1):
             pass  # file might not exist yet
         time.sleep(poll_interval)
     return False
+
+async def click_and_refresh(message, client, text):
+    await message.click(text=text)
+    # Re-fetch the same message until text is updated
+    for _ in range(10):  # up to 10 tries
+        updated = await client.get_messages(message.peer_id, ids=message.id)
+        if updated.text != message.text:  # means it got edited
+            return updated
+        await asyncio.sleep(0.3)
+    return updated
+
+async def send_and_get_response(conv, text):
+    await conv.send_message(text)
+    return await conv.get_response()
