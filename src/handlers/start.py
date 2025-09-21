@@ -16,7 +16,7 @@ MAIN_MENU_INLINE = InlineKeyboardMarkup([
 # Start handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    greeting = f"Hello, {user.first_name or 'User'}! Welcome to Testronaut Bot.\n\n" \
+    greeting = f"Hello! Welcome to Testronaut Bot.\n\n" \
                "Choose an option to get started:"
     
     if update.callback_query:
