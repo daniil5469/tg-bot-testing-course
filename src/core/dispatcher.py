@@ -24,6 +24,7 @@ from telegram.ext import (
 
 from src.handlers import profile, crypto, start
 from src.config import TELEGRAM_BOT_TOKEN, CHAT_ID
+from src.services.user_store import init_store
 
 # Load .env before anything else
 load_dotenv()
@@ -62,6 +63,9 @@ def webhook():
     return "ok", 200
 
 async def create_application():
+    # Ensure user store file exists and is valid JSON
+    init_store()
+    
     app_instance = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     if CHAT_ID:
