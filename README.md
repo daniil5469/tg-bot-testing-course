@@ -72,11 +72,43 @@ CHAT_ID=123456789
 PUBLIC_URL=https://your-ngrok-url.ngrok-free.app
 BASE_URL=https://api.telegram.org
 MODE=webhook
+
+# Telethon (required for E2E tests)
+TG_API_ID=12345678
+TG_API_HASH=your_api_hash_here
+TG_PHONE=+1234567890
+TG_BOT_USERNAME=@your_bot_username
+
+# Webhook secret (optional but recommended)
+WEBHOOK_SECRET_TOKEN=your_random_secret_here
 ```
 
 ⚠️ Never commit your `.env` file. It’s already listed in `.gitignore` to protect your token.
 
-### 3. Create bot.log file in the cloned project root 
+### 3. Create Telethon session (required for E2E tests)
+
+E2E tests use [Telethon](https://github.com/LonamiWebs/Telethon) to simulate a real user interacting with the bot. Telethon authenticates as a **regular Telegram user**, not as a bot. This means you need:
+
+- MTProto API credentials from [my.telegram.org](https://my.telegram.org) (`TG_API_ID`, `TG_API_HASH`)
+- A real phone number (`TG_PHONE`) to receive the one-time verification code
+
+Run this script **once** to create the session file:
+
+```bash
+python scripts/create_session.py
+```
+
+Telethon will send a verification code to your Telegram account. Enter it when prompted. A `user_session.session` file will be saved in the project root and reused on every subsequent test run — you won’t need to authenticate again unless the session expires.
+
+> **Common error:** `UserIsBotError: Bots can’t send messages to other bots`
+>
+> This means the session file was created with a bot token instead of a phone number. Fix:
+> ```bash
+> rm user_session.session
+> python scripts/create_session.py
+> ```
+
+### 4. Create bot.log file in the cloned project root 
 
 `bot.log` captures the bot's response and all the necessary info to work with this project
 
@@ -88,60 +120,67 @@ To run your own copy of this bot, follow these steps:
 
 ## ▶️ Run the Bot
 
-### Option 1: Polling Mode (recommended for local/dev testing)
+### Mode A — Polling (recommended for local/dev testing)
 
 ```bash
 python -m scripts.start_ngrok_and_bot --mode polling
 ```
 
-Once bot is started and working, you should see:
+Expected output:
 
-```bash
+```
 🤖 Polling mode started
 ```
 
-### Option 2: Webhook Mode (requires ngrok)
-
+### Mode B — Webhook (requires ngrok)
 
 ```bash
 python -m scripts.start_ngrok_and_bot --mode webhook
 ```
 
-Once bot is started and listening for a webhook updates, you should see:
+Expected output:
 
-```bash
+```
 🌐 Webhook mode: listening on https://your-ngrok-url.ngrok-free.app/webhook
 ```
 
-⚠️ Make sure ngrok is installed and accessible from command line.
+⚠️ Make sure ngrok is installed and accessible from the command line.
 
+---
 
 # 🧪 Run Tests
 
-This bot includes log-based integration tests using pytest. After you interact with the bot manually (e.g., send /start command), the tests will validate bot behavior by reading the bot.log
+Start the bot first (in either mode), then run tests in a separate terminal.
 
-Once you started the bot, you can run tests
+Use `-s` to see live console output (log progress, assertions, etc.).
 
-### 1. Send command to the Bot in Telegram
-
-```Telegram
-/start
-```
-
-### 2. Run tests
+### Run all tests
 
 ```bash
-pytest -s tests/test_start.py
+pytest
 ```
 
-### 3. Example output for polling mode
+### Run by layer
 
 ```bash
-tests/test_start.py --- Please send `/start` message to the bot within 15 seconds...
-✅ Bot replied to /start message successfully - found in logs
-```
+# Webhook integration — validates webhook registration and health
+pytest tests/0_test_webhook.py -s
 
-Use -s to print live console outputs (helpful when reading log progress)
+# Profile unit tests — mock-based, no bot required
+pytest tests/1_test_profile_mock.py -s
+
+# /start command — polling mode, real Telethon client
+pytest tests/2_test_start_polling.py -s
+
+# Crypto market + profile creation E2E
+pytest tests/3_test_favorites.py -s
+
+# Full E2E user journey (profile + favorites)
+pytest tests/7_tests_e2e.py -s
+
+# Integration tests (bot info, crypto API)
+pytest tests/integration/ -s
+```
 
 ## 📁 Project Structure
 

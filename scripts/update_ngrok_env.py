@@ -19,13 +19,19 @@ def start_ngrok_once():
     subprocess.Popen(["ngrok", "http", str(PORT)], stdout=subprocess.DEVNULL)
     print("🚀 Ngrok process started via subprocess...")
 
-    # Wait for ngrok to come up
-    time.sleep(3)
+    # Poll until tunnel is ready (up to 15 seconds)
+    for _ in range(30):
+        time.sleep(0.5)
+        try:
+            tunnels = requests.get("http://127.0.0.1:4040/api/tunnels").json().get("tunnels", [])
+            if tunnels:
+                public_url = tunnels[0]["public_url"]
+                print(f"✅ Tunnel ready: {public_url}")
+                return public_url
+        except Exception:
+            pass
 
-    # Get the newly created ngrok public URL (for current session)
-    tunnels = requests.get("http://127.0.0.1:4040/api/tunnels").json()["tunnels"]
-    public_url = tunnels[0]["public_url"]
-    return public_url
+    raise RuntimeError("ngrok tunnel did not start within 15 seconds")
 
 def update_env_public_url(public_url):
     new_lines = []
