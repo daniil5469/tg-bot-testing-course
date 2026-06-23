@@ -71,9 +71,6 @@ async def test_profile_creation_and_viewing(test_profile_data, expected_profile_
             msg = await send_and_get_response(conv, test_profile_data["location"])
             assert "Profile created successfully!" in msg.text
 
-            # Confirmation
-            assert "Profile created successfully!" in msg.text
-
             # View Profile again
             msg = await click_and_refresh(msg, client, "View Profile")
             assert expected_profile_text in msg.text.strip()
@@ -84,6 +81,7 @@ async def test_profile_creation_and_viewing(test_profile_data, expected_profile_
             # Delete created profile
             msg = await click_and_refresh(msg, client, "Delete Profile")
             assert "Your profile has been deleted successfully." in msg.text
+
             # Back to main menu
             msg = await click_and_refresh(msg, client, "Back to Main Menu")
             assert "Welcome back! Please choose an option:" in msg.text

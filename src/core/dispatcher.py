@@ -8,6 +8,7 @@ from scripts.update_webhook import update_telegram_webhook
 
 import logging
 import asyncio
+import threading
 import traceback
 from dotenv import load_dotenv
 from flask import Flask, request
@@ -23,7 +24,8 @@ from telegram.ext import (
 )
 
 from src.handlers import profile, crypto, start
-from src.config import TELEGRAM_BOT_TOKEN, CHAT_ID
+from src.config import TELEGRAM_BOT_TOKEN, CHAT_ID, WEBHOOK_SECRET_TOKEN
+from src.services.user_store import init_store
 
 # Load .env before anything else
 load_dotenv()
@@ -31,9 +33,8 @@ load_dotenv()
 # Flask app for webhook
 app = Flask(__name__)
 
-# Global asyncio loop
+# Dedicated event loop that runs in a background thread for webhook mode
 loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
 
 # Logging setup
 logging.basicConfig(
@@ -47,6 +48,11 @@ application: Application = None
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
+    if WEBHOOK_SECRET_TOKEN:
+        incoming = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        if incoming != WEBHOOK_SECRET_TOKEN:
+            return "Forbidden", 403
+
     try:
         data = request.get_json(force=True)
         print("Incoming webhook update:", data)
@@ -62,6 +68,9 @@ def webhook():
     return "ok", 200
 
 async def create_application():
+    # Ensure user store file exists and is valid JSON
+    init_store()
+    
     app_instance = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     if CHAT_ID:
@@ -80,6 +89,7 @@ async def create_application():
         },
         fallbacks=[CommandHandler("cancel", profile.cancel)],
         allow_reentry=True,
+        per_message=False,
     )
 
     # Command handlers
@@ -107,19 +117,28 @@ def run_webhook():
     # Register webhook with Telegram
     update_telegram_webhook(public_url)
 
-    # Update env variables for the next steps
     os.environ["PUBLIC_URL"] = public_url
 
-    # Init Telegram application
     if not TELEGRAM_BOT_TOKEN or not public_url:
         print("Missing TELEGRAM_BOT_TOKEN or PUBLIC_URL")
         return
 
-    application = asyncio.run(create_application())
+    # Start the event loop in a background thread so run_coroutine_threadsafe has a running loop
+    def _run_loop():
+        asyncio.set_event_loop(loop)
+        loop.run_forever()
 
-    # Run Flask app
+    threading.Thread(target=_run_loop, daemon=True).start()
+
+    # Initialize the application on that same running loop
+    application = asyncio.run_coroutine_threadsafe(create_application(), loop).result(timeout=30)
+    asyncio.run_coroutine_threadsafe(application.initialize(), loop).result(timeout=10)
+    asyncio.run_coroutine_threadsafe(application.start(), loop).result(timeout=10)
+
+    # Run Flask — debug=False avoids the Werkzeug reloader spawning a child
+    # process where `application` would be None
     print(f"Webhook mode: listening on {public_url}/webhook")
-    app.run(host="0.0.0.0", port=8443, debug=True)
+    app.run(host="0.0.0.0", port=8443, debug=False)
 
 def run_bot():
     global application

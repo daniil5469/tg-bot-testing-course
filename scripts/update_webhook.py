@@ -7,13 +7,13 @@ import sys
 # Allow import from project root
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.config import TELEGRAM_BOT_TOKEN
+from src.config import TELEGRAM_BOT_TOKEN, WEBHOOK_SECRET_TOKEN
 
 
 def update_telegram_webhook(public_url):
     load_dotenv()
     url = f"{public_url}/webhook"
-    
+
     if not TELEGRAM_BOT_TOKEN or not public_url:
         raise ValueError("Missing TELEGRAM_BOT_TOKEN or PUBLIC_URL")
 
@@ -33,9 +33,12 @@ def update_telegram_webhook(public_url):
 
     # Set new webhook
     print(f"Setting new webhook to {url}...")
+    payload = {"url": url}
+    if WEBHOOK_SECRET_TOKEN:
+        payload["secret_token"] = WEBHOOK_SECRET_TOKEN
     set_response = requests.post(
         f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook",
-        json={"url": url}
+        json=payload,
     )
     if set_response.ok and set_response.json().get("ok"):
         print(f"Webhook set successfully to {url}")

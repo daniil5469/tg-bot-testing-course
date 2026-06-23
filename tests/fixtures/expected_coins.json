@@ -1,0 +1,12 @@
+{
+    "expected_coins": ["Bitcoin",
+    "Ethereum",
+    "Tether",
+    "BNB",
+    "XRP",
+    "USDC",
+    "Solana",
+    "TRON",
+    "Lido Staked Ether",
+    "Dogecoin"]
+}

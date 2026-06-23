@@ -8,13 +8,31 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "..", "core", "data")
 USER_DATA_FILE = os.path.join(DATA_DIR, "user_data.json")
 
+def init_store():
+    if not os.path.exists(USER_DATA_FILE):
+        with open(USER_DATA_FILE, "w") as f:
+            f.write("{}")
+    else:
+        # Ensure valid JSON (repair if empty or broken)
+        try:
+            with open(USER_DATA_FILE, "r") as f:
+                json.load(f)
+        except (json.JSONDecodeError, ValueError):
+            with open(USER_DATA_FILE, "w") as f:
+                f.write("{}")
 
 def _load_data():
     if not os.path.exists(USER_DATA_FILE):
         return {}
     with open(USER_DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-
+        try:
+            content = f.read().strip()
+            if not content:  # file is empty string
+                return {}
+            return json.loads(content)
+        except json.JSONDecodeError:
+            # corrupted - reset gracefully
+            return {}
 
 def _save_data(data):
     os.makedirs(DATA_DIR, exist_ok=True)

@@ -37,3 +37,18 @@ def tg_phone():
 @pytest.fixture(scope="session")
 def tg_bot_username():
     return os.getenv("TG_BOT_USERNAME")
+
+@pytest.fixture(scope="session")
+def expected_crypto_coins():
+    return [
+        "Bitcoin",
+        "Ethereum",
+        "Tether",
+        "BNB",
+        "XRP",
+        "USDC",
+        "Solana",
+        "TRON",
+        "Lido Staked Ether",
+        "Dogecoin",
+    ]
