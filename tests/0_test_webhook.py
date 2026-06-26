@@ -8,6 +8,10 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
+def _mask_url(url: str) -> str:
+    return "****" if url else None
+
+
 def test_webhook_is_registered_and_healthy():
     logger.info("Checking Telegram webhook health via getWebhookInfo")
 
@@ -17,13 +21,25 @@ def test_webhook_is_registered_and_healthy():
     assert response.status_code == 200
 
     data = response.json()
-    logger.info("Webhook info response: %s", data)
+    masked_data = {
+        **data,
+        "result": {
+            **data.get("result", {}),
+            "url": "****" if data.get("result", {}).get("url") else None,
+            "ip_address": "****" if data.get("result", {}).get("ip_address") else None,
+        },
+    }
+    logger.info("Webhook info response: %s", masked_data)
 
     assert data["ok"] is True
 
     result = data["result"]
 
-    logger.info("Webhook URL: %s", result.get("url"))
+    webhook_url = result.get("url")
+    masked_url = _mask_url(webhook_url) if webhook_url else None
+    logger.info("Webhook URL: %s", masked_url)
+    ip_address = result.get("ip_address")
+    logger.info("IP address: %s", "****" if ip_address else None)
     logger.info("Pending updates: %s", result.get("pending_update_count"))
     logger.info("Last error message: %s", result.get("last_error_message"))
 
